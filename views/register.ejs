@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Virtual</title>
+    <meta name="description" content="Create your account to get started" />
+    <style>
+      /* Base Resets */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      :root {
+        --background: 255 255 255;
+        --foreground: 0 0 0;
+        --card: 255 255 255;
+        --card-foreground: 0 0 0;
+        --border: 229 231 235;
+        --muted: 245 245 245;
+        --muted-foreground: 115 115 115;
+        --accent: 0 0 0;
+        --accent-foreground: 255 255 255;
+        --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
+
+      [data-theme="dark"] {
+        --background: 0 0 0;
+        --foreground: 255 255 255;
+        --card: 0 0 0;
+        --card-foreground: 255 255 255;
+        --border: 39 39 42;
+        --muted: 18 18 18;
+        --muted-foreground: 161 161 170;
+        --accent: 255 255 255;
+        --accent-foreground: 0 0 0;
+      }
+
+      body {
+        font-family: var(--font-sans);
+        background-color: rgb(var(--background));
+        color: rgb(var(--foreground));
+        line-height: 1.5;
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+      }
+
+      /* Grid Background */
+      .grid-background {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: -1;
+        background-image: radial-gradient(circle at 2px 2px, rgb(var(--foreground) / 0.07) 1px, transparent 0);
+        background-size: 24px 24px;
+      }
+
+      /* Theme Toggle */
+      .theme-toggle {
+        position: fixed;
+        top: 1.5rem;
+        right: 1.5rem;
+        width: 2.75rem;
+        height: 2.75rem;
+        background: rgb(var(--card));
+        border: 1px solid rgb(var(--border));
+        border-radius: 0.75rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      }
+
+      .theme-toggle:hover {
+        background: rgb(var(--muted));
+        transform: translateY(-2px);
+      }
+
+      .theme-toggle svg {
+        width: 1.25rem;
+        height: 1.25rem;
+        color: rgb(var(--foreground));
+      }
+
+      /* Card Container */
+      .content {
+        width: 100%;
+        max-width: 440px;
+        padding: 1.5rem;
+        position: relative;
+      }
+
+      .registration-card {
+        background: rgb(var(--card));
+        padding: 2.5rem;
+        border-radius: 1.25rem;
+        border: 1px solid rgb(var(--border));
+        box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(8px);
+      }
+
+      .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+      }
+
+      .form-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        letter-spacing: -0.03em;
+        margin-bottom: 0.5rem;
+      }
+
+      .form-subtitle {
+        color: rgb(var(--muted-foreground));
+        font-size: 0.9375rem;
+      }
+
+      /* Social Buttons Styling */
+      .social-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .social-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        background: rgb(var(--card));
+        border: 1px solid rgb(var(--border));
+        border-radius: 0.75rem;
+        color: rgb(var(--foreground));
+        font-size: 0.875rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+      }
+
+      .social-btn:hover {
+        background: rgb(var(--muted));
+        border-color: rgb(var(--foreground) / 0.2);
+        transform: translateY(-1px);
+      }
+
+      .social-btn svg {
+        width: 1.25rem;
+        height: 1.25rem;
+      }
+
+      /* Divider */
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: 1.5rem 0;
+        color: rgb(var(--muted-foreground));
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        font-weight: 600;
+      }
+
+      .divider::before,
+      .divider::after {
+        content: "";
+        flex: 1;
+        height: 1px;
+        background: rgb(var(--border));
+      }
+
+      .divider span {
+        padding: 0 0.75rem;
+      }
+
+      /* Input Styling */
+      .form-group {
+        margin-bottom: 1.25rem;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 0.4rem;
+        color: rgb(var(--foreground));
+        font-weight: 600;
+        font-size: 0.8125rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 0.8rem 1rem;
+        background: rgb(var(--muted));
+        color: rgb(var(--foreground));
+        border: 1px solid rgb(var(--border));
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        font-family: inherit;
+        transition: all 0.2s ease;
+      }
+
+      .form-input:focus {
+        outline: none;
+        background: rgb(var(--card));
+        border-color: rgb(var(--foreground));
+        box-shadow: 0 0 0 4px rgb(var(--foreground) / 0.05);
+      }
+
+      /* Buttons */
+      .form-button {
+        width: 100%;
+        padding: 0.875rem;
+        background: rgb(var(--accent));
+        color: rgb(var(--accent-foreground));
+        font-weight: 700;
+        font-size: 0.95rem;
+        border: none;
+        border-radius: 0.75rem;
+        cursor: pointer;
+        margin-top: 1rem;
+        margin-bottom: 1.5rem;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .form-button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 8px 20px -4px rgb(var(--accent) / 0.3);
+      }
+
+      .form-link {
+        text-align: center;
+        font-size: 0.875rem;
+        color: rgb(var(--muted-foreground));
+      }
+
+      .form-link a {
+        color: rgb(var(--foreground));
+        text-decoration: none;
+        font-weight: 600;
+        border-bottom: 1px solid transparent;
+        transition: border 0.2s;
+      }
+
+      .form-link a:hover {
+        border-bottom: 1px solid rgb(var(--foreground));
+      }
+
+      /* Alerts */
+      .alert {
+        padding: 0.875rem;
+        border-radius: 0.75rem;
+        margin-bottom: 1.25rem;
+        text-align: center;
+        font-size: 0.875rem;
+        font-weight: 500;
+        border: 1px solid transparent;
+      }
+
+      .alert-error {
+        background: rgba(239, 68, 68, 0.1);
+        border-color: rgba(239, 68, 68, 0.2);
+        color: #ef4444;
+      }
+
+      .alert-success {
+        background: rgba(34, 197, 94, 0.1);
+        border-color: rgba(34, 197, 94, 0.2);
+        color: #22c55e;
+      }
+
+      @media (max-width: 480px) {
+        .registration-card {
+          padding: 1.5rem;
+          border: none;
+          background: transparent;
+          box-shadow: none;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="grid-background"></div>
+
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+      </svg>
+    </button>
+
+    <main class="content">
+      <!-- Alerts -->
+      <% if (locals.error && error.length > 0) { %>
+        <% error.forEach(err => { %>
+          <div class="alert alert-error"><%= err %></div>
+        <% }) %>
+      <% } %>
+
+      <% if (locals.message) { %>
+          <div class="alert alert-success"><%= message %></div>
+      <% } %>
+
+      <div class="registration-card">
+        <div class="form-header">
+          <h1 class="form-title">Get Started</h1>
+          <p class="form-subtitle">Create your account to start shortening</p>
+        </div>
+
+        <!-- Social Logins -->
+        <div class="social-group">
+          <a href="/auth/google" class="social-btn">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/>
+              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 12-4.53z" fill="#EA4335"/>
+            </svg>
+            Google
+          </a>
+          <a href="/auth/github" class="social-btn">
+            <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.008.069-.008 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd" />
+            </svg>
+            GitHub
+          </a>
+        </div>
+
+        <div class="divider">
+          <span>Or create with email</span>
+        </div>
+
+        <form action="/auth/register" method="POST">
+          <div class="form-group">
+            <label for="name" class="form-label">Full Name</label>
+            <input type="text" id="name" name="username" class="form-input" placeholder="John Doe" required />
+          </div>
+
+          <div class="form-group">
+            <label for="email" class="form-label">Email Address</label>
+            <input type="email" id="email" name="email" class="form-input" placeholder="john@example.com" required />
+          </div>
+
+          <div class="form-group">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" id="password" name="password" class="form-input" placeholder="••••••••" required />
+          </div>
+
+          <button type="submit" class="form-button">Create Account</button>
+
+          <p class="form-link" style="padding-bottom: 10px;">
+            Forgot your password? <a href="/auth/forgot-password">Reset it</a>
+          </p>
+          <p class="form-link">
+            Already have an account? <a href="/auth/login">Log In</a>
+          </p>
+        </form>
+      </div>
+    </main>
+
+    <script>
+      function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", newTheme);
+        try { localStorage.setItem("theme", newTheme); } catch {}
+      }
+
+      (function () {
+        const stored = localStorage.getItem("theme") || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+        document.documentElement.setAttribute("data-theme", stored);
+      })();
+    </script>
+  </body>
+</html>

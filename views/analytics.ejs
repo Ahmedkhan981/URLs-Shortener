@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Analytics</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --background: 255 255 255;
+            --foreground: 0 0 0;
+            --card: 255 255 255;
+            --card-foreground: 0 0 0;
+            --border: 229 231 235;
+            --muted: 245 245 245;
+            --muted-foreground: 115 115 115;
+            --accent: 0 0 0;
+            --accent-foreground: 255 255 255;
+            --destructive: 239 68 68;
+            --success: 34 197 94;
+            --radius: 0.75rem;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        [data-theme="dark"] {
+            --background: 0 0 0;
+            --foreground: 255 255 255;
+            --card: 10 10 10;
+            --card-foreground: 255 255 255;
+            --border: 39 39 42;
+            --muted: 18 18 18;
+            --muted-foreground: 161 161 170;
+            --accent: 255 255 255;
+            --accent-foreground: 0 0 0;
+        }
+
+        body {
+            font-family: var(--font-sans);
+            background: rgb(var(--background));
+            color: rgb(var(--foreground));
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* GRID BACKGROUND */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image: radial-gradient(circle at 2px 2px, rgb(var(--foreground) / 0.07) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+
+        /* Layout */
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: rgb(var(--card));
+            border-right: 1px solid rgb(var(--border));
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 50;
+        }
+
+        .logo {
+            font-weight: 800;
+            font-size: 1.25rem;
+            padding-left: 0.75rem;
+            text-decoration: none;
+            color: rgb(var(--foreground));
+            letter-spacing: -0.03em;
+        }
+
+        .nav-group { display: flex; flex-direction: column; gap: 0.35rem; }
+
+        .nav-item {
+            padding: 0.65rem 0.85rem;
+            border-radius: 0.6rem;
+            color: rgb(var(--muted-foreground));
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgb(var(--muted));
+            color: rgb(var(--foreground));
+        }
+
+        /* Header */
+        .header {
+            height: 64px;
+            border-bottom: 1px solid rgb(var(--border));
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            background: rgb(var(--background) / 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 40;
+        }
+
+        /* Content Area */
+        .content {
+            padding: 2.5rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .page-title {
+            font-size: 2.25rem;
+            font-weight: 800;
+            margin-bottom: 2.5rem;
+            letter-spacing: -0.04em;
+        }
+
+        /* Cards */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: rgb(var(--card));
+            border: 1px solid rgb(var(--border));
+            border-radius: 1.25rem;
+            padding: 1.75rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.2);
+            border-color: rgb(var(--foreground) / 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-label {
+            font-size: 0.7rem;
+            color: rgb(var(--muted-foreground));
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .url-display {
+            background: rgb(var(--muted));
+            padding: 1rem;
+            border-radius: 0.75rem;
+            font-family: 'SFMono-Regular', Consolas, monospace;
+            font-size: 0.9rem;
+            color: rgb(var(--foreground));
+            word-break: break-all;
+            border: 1px solid rgb(var(--border));
+            transition: all 0.2s ease;
+        }
+
+        .destination-text {
+            font-size: 0.85rem;
+            color: rgb(var(--muted-foreground));
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.6rem;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            border: 1px solid rgb(var(--border));
+        }
+
+        .btn-primary {
+            background: rgb(var(--accent));
+            color: rgb(var(--accent-foreground));
+            border: none;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: rgb(var(--muted-foreground));
+            border: none;
+        }
+
+        .btn-ghost:hover {
+            background: rgb(var(--muted));
+            color: rgb(var(--foreground));
+        }
+
+        .btn-copy {
+            color: rgb(var(--success)) !important;
+            border: 1px solid rgba(34, 197, 94, 0.2) !important;
+        }
+
+        .btn-copy:hover {
+            background: rgba(34, 197, 94, 0.1) !important;
+        }
+
+        /* Inputs */
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border-radius: 0.75rem;
+            border: 1px solid rgb(var(--border));
+            background: rgb(var(--muted));
+            color: rgb(var(--foreground));
+            font-family: inherit;
+            font-size: 0.9rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: rgb(var(--foreground));
+            background: rgb(var(--card));
+        }
+
+        /* Status badges */
+        .header-user-container { text-align: right; }
+        .user-name { display: block; font-size: 0.875rem; font-weight: 700; margin-bottom: 2px; }
+
+        .email-status {
+            font-size: 0.65rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        .status-valid { background: rgba(34,197,94,0.1); color: rgb(34,197,94); border: 1px solid rgba(34,197,94,0.2); }
+        .status-invalid { background: rgba(239,68,68,0.1); color: rgb(239,68,68); border: 1px solid rgba(239,68,68,0.2); }
+
+        @media (max-width: 768px) {
+            .menu-toggle { display: block; }
+            .layout { grid-template-columns: 1fr; }
+            .sidebar {
+                position: fixed;
+                left: -240px;
+                height: 100vh;
+                width: 240px;
+            }
+            .sidebar.active { left: 0; box-shadow: 20px 0 50px rgba(0,0,0,0.5); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="layout">
+        <aside class="sidebar" id="sidebar">
+            <a class="logo" href="/">ANALYTICS</a>
+            <nav class="nav-group">
+                <a href="/profile" class="nav-item active">Dashboard</a>
+                <a href="/profile/edit" class="nav-item">Edit Profile</a>
+            </nav>
+            <nav class="nav-group" style="margin-top: auto;">
+                <a href="/auth/logout" class="nav-item" style="color: rgb(var(--destructive));">Logout</a>
+            </nav>
+        </aside>
+
+        <main class="main" style="width: 100%;">
+            <header class="header">
+                <button class="btn btn-ghost menu-toggle" onclick="toggleSidebar()" style="display: none;">☰</button>
+                <h2 style="font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: rgb(var(--muted-foreground));">Overview</h2>
+
+                <div style="display: flex; align-items: center; gap: 1.5rem;">
+                    <% if (locals.user) { %>
+                    <div class="header-user-container">
+                        <span class="user-name"><%=  user.username %></span>
+                        <% if (locals.email) { %>
+                            <span class="email-status status-valid">Verified</span>
+                        <% } else { %>
+                            <a href="/verify/verify-email" class="email-status status-invalid" style="text-decoration:none">Verify Email</a>
+                        <% } %>
+                    </div>
+                    <% } %>
+
+                    <button class="btn btn-ghost" onclick="toggleTheme()" style="padding: 8px; border: 1px solid rgb(var(--border));">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content">
+                <h1 class="page-title">Link Analytics</h1>
+
+                <div class="cards-grid">
+                    <% if (!locals.analytics || analytics.length === 0) { %>
+                        <div style="grid-column: 1/-1; text-align: center; padding: 5rem; border: 2px dashed rgb(var(--border)); border-radius: 1.5rem; background: rgb(var(--card) / 0.5);">
+                            <p style="color: rgb(var(--muted-foreground)); font-weight: 500;">No links found. Shorten a URL to see it here.</p>
+                        </div>
+                    <% } else { %>
+                        <% analytics.forEach(item => { %>
+                        <div class="card" id="card-<%= item.id %>">
+                            <div class="card-header">
+                                <span class="card-label">Short URL</span>
+                                <div style="display: flex; gap: 6px;">
+                                    <button class="btn btn-ghost btn-copy" onclick="copyToClipboard('<%= item.shortUrl %>', this)">Copy</button>
+                                    <button class="btn btn-ghost" onclick="toggleEdit('<%= item.id %>')">Edit</button>
+                                    <button class="btn btn-ghost" style="color: rgb(var(--destructive));" onclick="confirmDelete('<%= item.id %>')">Delete</button>
+                                </div>
+                            </div>
+
+                            <div class="url-display"><%= item.shortUrl %></div>
+
+                            <div>
+                                <span class="card-label" style="display: block; margin-bottom: 4px;">Destination</span>
+                                <p class="destination-text"><%= item.originalUrl %></p>
+                            </div>
+
+                            <form id="form-<%= item.id %>" style="display:none; gap: 1rem; flex-direction: column; padding-top: 1.25rem; border-top: 1px solid rgb(var(--border));" onsubmit="submitUpdate(event, '<%= item.id %>')">
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <label class="card-label">Short Path</label>
+                                    <input type="text" class="form-input" name="shortUrl" value="<%= item.shortUrl %>" required>
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                                    <label class="card-label">Original URL</label>
+                                    <input type="url" class="form-input" name="originalUrl" value="<%= item.originalUrl %>" required>
+                                </div>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <button type="submit" class="btn btn-primary" style="flex: 1;">Save</button>
+                                    <button type="button" class="btn btn-ghost" onclick="toggleEdit('<%= item.id %>')">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                        <% }) %>
+                    <% } %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const theme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            html.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+        
+        if(localStorage.getItem('theme')) document.documentElement.setAttribute('data-theme', localStorage.getItem('theme'));
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('active');
+        }
+
+        function toggleEdit(id) {
+            const form = document.getElementById('form-' + id);
+            form.style.display = form.style.display === 'none' ? 'flex' : 'none';
+        }
+
+        async function submitUpdate(event, id) {
+            event.preventDefault();
+            const form = event.target;
+            const formData = new FormData(form);
+            const data = {
+                shortUrl: formData.get('shortUrl'),
+                originalUrl: formData.get('originalUrl')
+            };
+
+            try {
+                const response = await fetch(`/profile/${id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    alert("Updated successfully!");
+                    window.location.reload();
+                } else {
+                    const errorData = await response.json();
+                    alert("Error: " + (errorData.error || "Failed to update"));
+                }
+            } catch (err) {
+                console.error("Update failed:", err);
+                alert("An error occurred. check console.");
+            }
+        }
+
+        async function copyToClipboard(shortPath, button) {
+            const fullUrl = window.location.origin + '/' + shortPath;
+            try {
+                await navigator.clipboard.writeText(fullUrl);
+                const originalText = button.innerText;
+                button.innerText = "Copied!";
+                button.style.color = "white";
+                button.style.backgroundColor = "rgb(var(--success))";
+
+                setTimeout(() => {
+                    button.innerText = originalText;
+                    button.style.color = "black";
+                    button.style.backgroundColor = "";
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                alert("Failed to copy to clipboard");
+            }
+        }
+
+        function confirmDelete(id) {
+            if(confirm("Are you sure you want to delete this link?")) {
+                fetch(`/profile/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if(res.ok) window.location.reload();
+                    else alert("Delete failed");
+                });
+            }
+        }
+    </script>
+</body>
+</html>
