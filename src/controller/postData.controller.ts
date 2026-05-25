@@ -29,8 +29,8 @@ import * as argon2 from "argon2";
 import { logger } from "../utils/logger.js";
 import { getBaseUrl } from "../lib/urlDetecter.js";
 import path from "node:path";
-import  fs  from 'fs/promises';
-
+import fs from "fs/promises";
+import { existsSync } from "fs";
 
 export const postData = async (
   req: Request,
@@ -138,7 +138,6 @@ export const home = async (req: Request, res: Response) => {
   });
 };
 
-
 export const userUrlData = async (
   req: Request,
   res: Response,
@@ -166,7 +165,6 @@ export const userUrlData = async (
       email: user.isEmailValid,
       message: urls.length === 0 ? "No URLs found yet" : undefined,
       id: user.id,
-
     });
   } catch (error) {
     logger.error(`❌ Error-userUrlData: ${error}`);
@@ -215,13 +213,11 @@ export const deleteShortUrl = async (
   try {
     const parsed = idSchema.safeParse(req.params.id);
     if (!parsed.success) {
-      return res
-        .status(400)
-        .json({
-          error: parsed.error.issues.map(
-            (err: { message: string }) => err.message,
-          ),
-        });
+      return res.status(400).json({
+        error: parsed.error.issues.map(
+          (err: { message: string }) => err.message,
+        ),
+      });
     }
 
     const result = await deleteUrl(parsed.data);
@@ -257,59 +253,104 @@ export const editPage = async (
         error: req.flash("error"),
         message: req.flash("message"),
       },
+      picture: result.profilePicture,
       noneSelected: result.password === null ? false : true,
     });
   } catch (error) {
     next(error);
   }
 };
-
 export const updateUserData = async (
   req: Request,
   res: Response,
   next: NextFunction,
 ) => {
   if (!req.user) return res.status(401).redirect("/auth/login");
+
   const userId = (req.user as accessTokenPayLoad).id;
   const data = req.body;
   const result = await getUserById(userId);
+
   if (!result) {
     req.flash("error", "User not found");
     return res.status(404).redirect("/auth/login");
   }
-  try {
-    // --- CASE 1: USERNAME UPDATE ---
-    if ("username" in data) {
-      const validation = await nameSchema.safeParseAsync(data);
-      if (!validation.success) {
-        req.flash(
-          "error",
-          validation.error.issues.map((i: { message: string }) => i.message),
-        );
-        return res.status(400).redirect("/profile/edit");
-      }
 
-      const { username } = validation.data;
-      if (username === (req.user as accessTokenPayLoad).username) {
-        req.flash("message", "No changes detected");
-      } else {
-        const changedName = await updateUserName(username, userId);
-        if (changedName) {
-          req.flash("message", "Username updated successfully");
-          await authentication({
-            req,
-            res,
-            userId: changedName.id,
-            username: changedName.username,
-            email: changedName.email,
-            isEmailValid: changedName.isEmailValid,
-          });
+  try {
+    // ─── OPTION A: HANDLE PROFILE AND/OR IMAGE CHANGES TOGETHER ───
+    if ("username" in data || req.file) {
+      let changeDetected = false;
+
+      // 1. Process Username if it was submitted
+      if ("username" in data) {
+        const validation = await nameSchema.safeParseAsync(data);
+        if (!validation.success) {
+          req.flash(
+            "error",
+            validation.error.issues.map((i: { message: string }) => i.message),
+          );
+          return res.status(400).redirect("/profile/edit");
+        }
+
+        const { username } = validation.data;
+        if (username !== (req.user as accessTokenPayLoad).username) {
+          const changedName = await updateUserName(username, userId);
+          if (changedName) {
+            changeDetected = true;
+            result.username = changedName.username; // keep local data in sync
+          }
         }
       }
+
+      // 2. Process File Upload (No longer blocked by the username check!)
+      if (req.file) {
+        const filename = req.file.filename;
+        const relativeImagePath = `/uploads/avatar/${filename}`;
+
+        // Delete old profile picture if it exists
+        if (
+          result.profilePicture &&
+          result.profilePicture.startsWith("/uploads/")
+        ) {
+          const oldImagePath = path.join(
+            process.cwd(),
+            "public",
+            result.profilePicture,
+          );
+          try {
+            await fs.unlink(oldImagePath);
+          } catch (unlinkError) {
+            logger.warn(
+              `Could not delete old profile picture at ${oldImagePath}`,
+            );
+          }
+        }
+
+        await updateUserProfilePicture(relativeImagePath, Number(userId));
+        result.profilePicture = relativeImagePath; // keep local data in sync
+        changeDetected = true;
+      }
+
+      // 3. Issue Final Response Notifications & Update Cookies
+      if (changeDetected) {
+        req.flash("message", "Profile updated successfully!");
+        // Re-authenticate user so that headers & sessions reflect updates instantly
+        await authentication({
+          req,
+          res,
+          userId: result.id,
+          username: result.username,
+          email: result.email,
+          isEmailValid: result.isEmailValid,
+        });
+      } else {
+        req.flash("message", "No changes detected");
+      }
+
       return res.status(303).redirect("/profile/edit");
     }
 
-    // --- CASE 2: PASSWORD UPDATE ---
+    // ─── OPTION B: PASSWORD UPDATE (STANDARD) ───
     if ("currentPassword" in data && "newPassword" in data) {
       const validation = await passwordSchema.safeParseAsync(data);
       if (!validation.success) {
@@ -341,7 +382,8 @@ export const updateUserData = async (
         return res.status(401).redirect("/profile/edit");
       }
     }
-    // --- CASE 3: PASSWORD UPDATE AFTER SOCIAL LOGIN ---
+
+    // ─── OPTION C: PASSWORD UPDATE (AFTER OAUTH / SOCIAL LOGIN) ───
     if (result.password == null && "newPassword" in data) {
       const validation = await resetPasswordSchema.safeParseAsync(data);
       if (!validation.success) {
@@ -361,38 +403,6 @@ export const updateUserData = async (
         req.flash("error", err.message);
         return res.status(401).redirect("/profile/edit");
       }
-    }
-    // --- CASE 4: PROFILE PICTURE UPDATE ---
-    if (req.file) {
-      // Build the public web path string to store in the DB (e.g., "/uploads/avatar/12345-pic.png")
-      // We slice off 'public' so the client can fetch it cleanly through your static assets middleman
-      const relativeImagePath = `/${req.file.path.replace(/\\/g, "/").replace("public/", "")}`;
-
-      // If the user already has a custom image, clean it up from the filesystem
-      if (
-        result.profilePicture &&
-        result.profilePicture.startsWith("/uploads/")
-      ) {
-        const oldImagePath = path.join(
-          process.cwd(),
-          "public",
-          result.profilePicture,
-        );
-        try {
-          await fs.unlink(oldImagePath);
-        } catch (unlinkError) {
-          // Log filesystem errors but do not stop execution (e.g., if the file was already deleted manually)
-          logger.warn(
-            `Could not delete old profile picture at ${oldImagePath}`,
-          );
-        }
-      }
-
-      // Update URL reference string inside the database
-      await updateUserProfilePicture(relativeImagePath, userId);
-
-      req.flash("message", "Profile picture updated successfully!");
-      return res.status(303).redirect("/profile/edit");
     }
   } catch (error) {
     logger.error("❌ Error-updateUserData:", error);

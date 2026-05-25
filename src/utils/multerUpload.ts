@@ -1,5 +1,7 @@
 import multer, { type FileFilterCallback } from "multer";
 import type { Request } from "express";
+import fs from "fs";
+import path from "path";
 
 const storage = multer.diskStorage({
   destination: (
@@ -7,7 +9,12 @@ const storage = multer.diskStorage({
     file: Express.Multer.File,
     callback: (error: Error | null, destination: string) => void,
   ) => {
-    callback(null, "public/uploads/avatar");
+    const uploadPath = path.join(process.cwd(), "public", "uploads", "avatar");
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+
+    callback(null, uploadPath);
   },
   filename: (
     req: Request,
@@ -17,10 +24,11 @@ const storage = multer.diskStorage({
     const ext = file.originalname.split(".").pop();
     callback(
       null,
-      `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`,
+      `${Date.now()}-${Math.random().toString(36).substring(2, 11)}.${ext}`,
     );
   },
 });
+
 const fileFilter = (
   req: Request,
   file: Express.Multer.File,
@@ -37,6 +45,6 @@ export const multerUpload = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024, // 5MB
+    fileSize: 15 * 1024 * 1024, // 5MB
   },
 });

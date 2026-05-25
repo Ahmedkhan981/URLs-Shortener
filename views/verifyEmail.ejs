@@ -46,6 +46,8 @@
             display: flex;
             flex-direction: column;
             overflow-x: hidden;
+            overflow-y: auto;
+    padding-bottom: 2rem;
         }
 
         /* Premium Grid Background */
@@ -145,6 +147,32 @@
 
         .loader { width: 1.25rem; height: 1.25rem; border: 2px solid rgb(var(--accent-foreground) / 0.3); border-radius: 50%; border-top-color: rgb(var(--accent-foreground)); animation: spin 0.8s linear infinite; display: none; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        @media (max-width: 640px) {
+    .navbar {
+        padding: 1rem; /* Reduce side padding on very small screens */
+    }
+
+    .card {
+        padding: 1.5rem; /* Reduce card padding */
+        border-radius: 1rem;
+    }
+
+    .card-title {
+        font-size: 1.5rem; /* Smaller heading for mobile */
+    }
+
+    .code-input {
+        font-size: 1.25rem;
+        letter-spacing: 0.25rem; /* Tighten spacing on small screens */
+    }
+}
+
+/* Ensure the logo doesn't get squished */
+.logo {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
     </style>
 </head>
 

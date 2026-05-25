@@ -5,7 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Account Settings - Analytics</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700;800&display=swap">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
+    
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -53,20 +56,26 @@
             background-size: 24px 24px;
         }
 
+        /* DEFAULT DESKTOP LAYOUT */
         .layout {
             display: grid;
-            grid-template-columns: 240px 1fr;
-            min-height: 100vh;
+            grid-template-columns: 260px 1fr;
+            height: 100vh;
+            overflow: hidden;
         }
 
         /* Sidebar */
         .sidebar {
             background: rgb(var(--card));
             border-right: 1px solid rgb(var(--border));
-            padding: 2rem 1rem;
+            padding: 1.5rem;
             display: flex;
             flex-direction: column;
             gap: 2rem;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            overflow-y: auto;
         }
 
         .logo {
@@ -76,6 +85,30 @@
             color: rgb(var(--foreground));
             letter-spacing: -0.03em;
             padding-left: 0.75rem;
+        }
+
+        /* BURGER MENU BUTTON */
+        .burger-btn {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid rgb(var(--border));
+            color: rgb(var(--foreground));
+            border-radius: 0.6rem;
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .burger-btn:hover {
+            background: rgb(var(--muted));
+        }
+
+        .nav-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            height: 100%;
         }
 
         .nav-group { display: flex; flex-direction: column; gap: 0.35rem; }
@@ -102,7 +135,11 @@
         }
 
         /* Main Content */
-        .main { width: 100%; }
+        .main {
+            height: 100vh;
+            overflow-y: auto;
+            background: transparent;
+        }
 
         .header {
             height: 64px;
@@ -199,7 +236,6 @@
             color: rgb(var(--accent-foreground));
             border: none;
         }
-
         .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
 
         .btn-ghost {
@@ -207,7 +243,6 @@
             color: rgb(var(--muted-foreground));
             border: none;
         }
-
         .btn-ghost:hover {
             background: rgb(var(--muted));
             color: rgb(var(--foreground));
@@ -226,38 +261,216 @@
         }
         .back-btn:hover { color: rgb(var(--foreground)); }
 
-        @media (max-width: 768px) {
-            .layout { grid-template-columns: 1fr; }
-            .sidebar { border-right: none; border-bottom: 1px solid rgb(var(--border)); padding-bottom: 1rem; }
+        /* MODERN CROPPING MODAL OVERLAY STYLES */
+        .crop-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
         }
-        /* Ensure the parent doesn't allow the sidebar to push past the viewport */
-.layout {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    height: 100vh; /* Lock the total height to the screen */
-    overflow: hidden; /* Prevent body scroll */
-}
+        .crop-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .crop-modal-content {
+            background: rgb(var(--card));
+            border: 1px solid rgb(var(--border));
+            border-radius: 1.25rem;
+            width: 90%;
+            max-width: 500px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5);
+        }
+        .crop-container {
+            max-height: 400px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+        .crop-container img {
+            max-width: 100%;
+            max-height: 400px;
+            display: block;
+        }
+        .crop-actions {
+            padding: 1.25rem;
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            background: rgb(var(--muted));
+            border-top: 1px solid rgb(var(--border));
+        }
 
-.sidebar {
-    border-right: 1px solid rgb(var(--border));
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-    background: rgb(var(--background));
-    
-    /* The Fix: Lock it to the screen */
-    height: 100vh;
-    position: sticky;
-    top: 0;
-    overflow-y: auto; /* If the nav items are too many, only the sidebar scrolls */
-}
+        /* OVERRIDE CROPPER CIRCLE THEME */
+        .cropper-view-box, .cropper-face {
+            border-radius: 50%;
+        }
 
-.main {
-    height: 100vh;
-    overflow-y: auto; /* This allows the content to scroll while the sidebar stays put */
-    background: transparent;
-}
+        /* ==========================================================================
+           RESPONSIVE MEDIA QUERIES (TABLET & MOBILE OPTIMIZATIONS)
+           ========================================================================== */
+
+        /* TABLET DEVICE TARGETS (Max-width: 1024px) */
+        @media (max-width: 1024px) {
+            .layout {
+                grid-template-columns: 220px 1fr;
+            }
+            .content {
+                padding: 2rem 1.5rem;
+            }
+        }
+
+        /* MOBILE DEVICE TARGETS (Max-width: 768px) */
+        @media (max-width: 768px) {
+            .layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto 1fr;
+                height: auto;
+                overflow: visible;
+            }
+
+            .sidebar {
+                position: sticky;
+                top: 0;
+                z-index: 50;
+                height: auto;
+                width: 100%;
+                padding: 1rem 1.5rem;
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: 1rem;
+                border-right: none;
+                border-bottom: 1px solid rgb(var(--border));
+                background: rgb(var(--card) / 0.85);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                overflow: visible;
+            }
+
+            .logo {
+                padding-left: 0;
+                font-size: 1.1rem;
+            }
+
+            /* Toggle Configuration for Mobile */
+            .burger-btn {
+                display: flex;
+            }
+
+            .nav-container {
+                display: none; 
+                height: auto;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                width: auto;
+                background: rgb(var(--card) / 0.95);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-bottom: 1px solid rgb(var(--border));
+                padding: 1.5rem;
+                flex-direction: column;
+                gap: 1.5rem;
+                box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.4);
+                z-index: 45;
+                max-height: calc(100vh - 64px);
+                overflow-y: auto;
+            }
+
+            .nav-container.open {
+                display: flex;
+                animation: dropdownFade 0.25s ease forwards;
+            }
+
+            @keyframes dropdownFade {
+                from { opacity: 0; transform: translateY(-10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+
+            .nav-label {
+                display: block; 
+                padding: 0 0.5rem;
+            }
+
+            .nav-item {
+                padding: 0.65rem 0.75rem;
+                font-size: 0.9rem;
+                width: 100%;
+            }
+
+            .sidebar nav.nav-group[style*="margin-top: auto;"] {
+                margin-top: 0 !important;
+                border-top: 1px solid rgb(var(--border));
+                padding-top: 0.75rem;
+            }
+
+            .main {
+                height: auto;
+                overflow: visible;
+            }
+
+            .header {
+                position: relative;
+                top: auto;
+                padding: 0 1.5rem;
+                height: 56px;
+                border-bottom: 1px solid rgb(var(--border));
+                background: transparent;
+                backdrop-filter: none;
+            }
+
+            .content {
+                padding: 1.5rem 1.5rem;
+            }
+
+            .page-title {
+                font-size: 1.75rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .card {
+                border-radius: 0.85rem;
+                margin-bottom: 1.25rem;
+            }
+
+            .card-header, .card-content {
+                padding: 1.25rem;
+            }
+
+            .crop-modal-content {
+                width: 95%;
+            }
+            .crop-container {
+                max-height: 300px;
+            }
+            .crop-container img {
+                max-height: 300px;
+            }
+        }
+
+        /* ULTRA SMALL MOBILE WORKSPACES */
+        @media (max-width: 480px) {
+            .sidebar {
+                padding: 0.75rem 1rem;
+            }
+            .crop-container {
+                max-height: 240px;
+            }
+            .crop-container img {
+                max-height: 240px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -266,22 +479,28 @@
         <aside class="sidebar">
             <a class="logo" href="/">ANALYTICS</a>
             
-            <div class="nav-group">
-                <span class="nav-label">Settings</span>
-                <a class="nav-item" href="/profile" >
-                    Go Back
-                </a>
-                <button class="nav-item active" id="btn-profile" onclick="showSection('profile-info', this)">
-                    Profile Information
-                </button>
-                <button class="nav-item" id="btn-security" onclick="showSection('security-settings', this)">
-                    Security & Password
-                </button>
-            </div>
+            <button class="burger-btn" id="burger-menu-btn" onclick="toggleMobileMenu()" aria-label="Toggle Menu">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path id="burger-icon" stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+            </button>
+            
+            <div class="nav-container" id="nav-container">
+                <div class="nav-group">
+                    <span class="nav-label">Settings</span>
+                    <a class="nav-item" href="/profile">Go Back</a>
+                    <button class="nav-item active" id="btn-profile" onclick="showSection('profile-info', this)">
+                        Profile Info
+                    </button>
+                    <button class="nav-item" id="btn-security" onclick="showSection('security-settings', this)">
+                        Security
+                    </button>
+                </div>
 
-            <nav class="nav-group" style="margin-top: auto;">
-                <a href="/logout" class="nav-item" style="color: #ef4444;">Logout</a>
-            </nav>
+                <nav class="nav-group" style="margin-top: auto;">
+                    <a href="/logout" class="nav-item" style="color: #ef4444;">Logout</a>
+                </nav>
+            </div>
         </aside>
 
         <main class="main">
@@ -318,7 +537,43 @@
                                 <p class="card-description">Update your display name and public identity.</p>
                             </div>
                             <div class="card-content">
-                                <form method="POST" action="/profile/edit" enctype="multipart/form-data">
+                                <form id="profile-form" method="POST" action="/profile/edit" enctype="multipart/form-data">
+                                    
+                                    <div class="form-group" style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+                                        <label class="form-label" style="align-self: flex-start;">Profile Picture</label>
+                                        
+                                        <div style="position: relative; width: 100px; height: 100px;">
+                                            <div id="avatar-container" style="width: 100%; height: 100%; border-radius: 50%; border: 2px solid rgb(var(--border)); background: rgb(var(--muted)); display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                                <img id="avatar-preview" 
+                                                     src="<%= locals.picture || '' %>" 
+                                                     alt="Avatar Preview" 
+                                                     onerror="this.style.display='none'; document.getElementById('avatar-placeholder').style.display='block';"
+                                                     class="<%= (locals.picture && locals.picture.length > 0) ? '' : 'hidden' %>"
+                                                     style="width: 100%; height: 100%; object-fit: cover;" />
+
+                                                <svg id="avatar-placeholder" 
+                                                     width="44" 
+                                                     height="44" 
+                                                     fill="none" 
+                                                     stroke="currentColor" 
+                                                     stroke-width="1.5" 
+                                                     viewBox="0 0 24 24" 
+                                                     class="<%= (locals.picture && locals.picture.length > 0) ? 'hidden' : '' %>"
+                                                     style="color: rgb(var(--muted-foreground)); opacity: 0.8;">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                                                </svg>
+                                            </div>
+                                            
+                                            <label class="form-label" for="avatar-input" style="position: absolute; bottom: 0; right: 0; background: rgb(var(--accent)); color: rgb(var(--accent-foreground)); border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); border: 2px solid rgb(var(--card)); transition: transform 0.2s; z-index: 10;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                                                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 0 1 8.686 5h6.628c.64 0 1.25.254 1.7.705L18.5 7.5a.75.75 0 0 0 .54.22h1.46c1.243 0 2.25 1.007 2.25 2.25v9a2.25 2.25 0 0 1-2.25 2.25H3.541A2.25 2.25 0 0 1 1.29 19.5v-9c0-1.243 1.007-2.25 2.25-2.25h1.46a.75.75 0 0 0 .54-.22l1.537-1.575ZM12 18a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"/>
+                                                </svg>
+                                            </label>
+                                            <input type="file" id="avatar-input" accept="image/*" style="display: none;" onchange="initiateAvatarCrop(event)" />
+                                        </div>
+                                        <p style="font-size: 0.75rem; color: rgb(var(--muted-foreground));">Click the camera icon to pick a new file</p>
+                                    </div>
+
                                     <div class="form-group">
                                         <label class="form-label">Profile Name</label>
                                         <input type="text" name="username" class="form-input" value="<%= locals.username || '' %>" required>
@@ -337,12 +592,12 @@
                             </div>
                             <div class="card-content">
                                 <form method="POST" action="/profile/edit">
-                                                    <% if (noneSelected) { %>
-                                    <div class="form-group">
-                                        <label class="form-label">Current Password</label>
-                                        <input type="password" name="currentPassword" class="form-input" placeholder="••••••••" required>
-                                    </div>
-                                                    <% } %>
+                                    <% if (locals.noneSelected) { %>
+                                        <div class="form-group">
+                                            <label class="form-label">Current Password</label>
+                                            <input type="password" name="currentPassword" class="form-input" placeholder="••••••••" required>
+                                        </div>
+                                    <% } %>
                                     <div class="form-group">
                                         <label class="form-label">New Password</label>
                                         <input type="password" name="newPassword" class="form-input" placeholder="••••••••" required>
@@ -361,11 +616,65 @@
         </main>
     </div>
 
+    <div class="crop-modal" id="cropModal">
+        <div class="crop-modal-content">
+            <div class="card-header">
+                <h3 class="card-title">Crop Profile Photo</h3>
+                <p class="card-description">Adjust selection scale to fit perfectly.</p>
+            </div>
+            <div class="crop-container">
+                <img id="image-to-crop" alt="Source Image Workspace">
+            </div>
+            <div class="crop-actions">
+                <button type="button" class="btn btn-ghost" onclick="cancelCrop()">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="executeCrop()">Apply Crop</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
+
     <script>
+        let cropperInstance = null;
+        let croppedImageBlob = null; 
+
         document.addEventListener('DOMContentLoaded', () => {
             const savedSection = localStorage.getItem('activeSection') || 'profile-info';
             const btn = document.getElementById(savedSection === 'profile-info' ? 'btn-profile' : 'btn-security');
             showSection(savedSection, btn, false);
+        });
+
+        /* MOBILE BURGER INTERACTION IMPLEMENTATION */
+        function toggleMobileMenu() {
+            const navContainer = document.getElementById('nav-container');
+            const burgerIcon = document.getElementById('burger-icon');
+            const isOpen = navContainer.classList.toggle('open');
+            
+            if (isOpen) {
+                burgerIcon.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+            } else {
+                burgerIcon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+            }
+        }
+
+        function closeMobileMenu() {
+            const navContainer = document.getElementById('nav-container');
+            const burgerIcon = document.getElementById('burger-icon');
+            if (navContainer.classList.contains('open')) {
+                navContainer.classList.remove('open');
+                burgerIcon.setAttribute('d', 'M4 6h16M4 12h16M4 18h16');
+            }
+        }
+
+        /* CLOSE MENU ON OUTSIDE CLICK */
+        document.addEventListener('click', (event) => {
+            const sidebar = document.querySelector('.sidebar');
+            const navContainer = document.getElementById('nav-container');
+            if (navContainer && navContainer.classList.contains('open')) {
+                if (!sidebar.contains(event.target)) {
+                    closeMobileMenu();
+                }
+            }
         });
 
         function showSection(sectionId, element, shouldSave = true) {
@@ -375,12 +684,14 @@
             const target = document.getElementById(sectionId);
             if (target) {
                 target.classList.add('active');
-                element.classList.add('active');
+                if(element) element.classList.add('active');
                 
                 const bread = document.getElementById('breadcrumb');
                 bread.innerText = sectionId === 'profile-info' ? 'Account / Profile' : 'Account / Security';
 
                 if (shouldSave) localStorage.setItem('activeSection', sectionId);
+                
+                closeMobileMenu();
             }
         }
 
@@ -393,7 +704,92 @@
         
         if(localStorage.getItem('theme')) document.documentElement.setAttribute('data-theme', localStorage.getItem('theme'));
 
-        // Auto-hide alerts
+        function initiateAvatarCrop(event) {
+            const input = event.target;
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const workspaceImage = document.getElementById('image-to-crop');
+                    workspaceImage.src = e.target.result;
+
+                    if (cropperInstance) {
+                        cropperInstance.destroy();
+                    }
+
+                    document.getElementById('cropModal').classList.add('show');
+
+                    cropperInstance = new Cropper(workspaceImage, {
+                        aspectRatio: 1, 
+                        viewMode: 1,    
+                        background: false,
+                        autoCropArea: 1,
+                        responsive: true
+                    });
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function cancelCrop() {
+            document.getElementById('cropModal').classList.remove('show');
+            document.getElementById('avatar-input').value = ""; 
+            if(cropperInstance) {
+                cropperInstance.destroy();
+                cropperInstance = null;
+            }
+        }
+
+        function executeCrop() {
+            if (!cropperInstance) return;
+
+            const canvas = cropperInstance.getCroppedCanvas({
+                width: 400,
+                height: 400,
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high',
+            });
+
+            const avatarPreview = document.getElementById('avatar-preview');
+            avatarPreview.src = canvas.toDataURL('image/jpeg', 0.9);
+            avatarPreview.style.display = 'block'; 
+
+            const svgPlaceholder = document.getElementById('avatar-placeholder');
+            if (svgPlaceholder) {
+                svgPlaceholder.style.display = 'none';
+            }
+
+            canvas.toBlob((blob) => {
+                croppedImageBlob = blob;
+                document.getElementById('cropModal').classList.remove('show');
+                cropperInstance.destroy();
+                cropperInstance = null; 
+            }, 'image/jpeg', 0.9);
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', function(e) {
+            if (croppedImageBlob) {
+                e.preventDefault(); 
+                
+                const originalForm = this;
+                const dynamicPayload = new FormData(originalForm);
+
+                dynamicPayload.set('avatar', croppedImageBlob, 'avatar-cropped.jpg');
+
+                fetch(originalForm.action, {
+                    method: originalForm.method,
+                    body: dynamicPayload
+                })
+                .then(response => {
+                    if (response.redirected) {
+                        window.location.href = response.url; 
+                    } else {
+                        window.location.reload();
+                    }
+                })
+                .catch(err => console.error("Form transmission failed: ", err));
+            }
+        });
+
         setTimeout(() => {
             const alerts = document.querySelectorAll('.alert');
             alerts.forEach(a => {

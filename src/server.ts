@@ -20,6 +20,7 @@ import {
   googleRouter,
   verifyRouter,
 } from "./router/routes.js";
+import path from "node:path";
 
 const app: Application = express();
 
@@ -28,7 +29,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(requestIp.mw());
 app.use(cookieParser(process.env.SESSION_SECRET));
-
+app.use(express.static(path.join(process.cwd(), "public")));
 const MySQLStore = MySQLStoreFactory(session as any);
 const sessionStore = new MySQLStore(
   {
