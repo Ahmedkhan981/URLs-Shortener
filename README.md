@@ -100,23 +100,30 @@ bun install
 Create a `.env` file in the root directory and add your credentials:
 
 ```env
-PORT=3000
-DATABASE_URL=your_database_url
-SESSION_SECRET=your_secret_key
+# Database
+DATABASE_URL=mysql://user:password@host:port/database
 
-# Google OAuth
-GOOGLE_CLIENT_ID=your_google_id
-GOOGLE_CLIENT_SECRET=your_google_secret
-GOOGLE_REDIRECT_URI=http://localhost:3000/auth/google/callback
-# or use the legacy name supported by this project:
-# GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
+# Authentication
+JWT_SECRET_KEY=your_jwt_secret_here
+ACCESS_TOKEN_JWT_SECRET_KEY=your_access_token_secret_here
+REFRESH_TOKEN_JWT_SECRET_KEY=your_refresh_token_secret_here
+SESSION_SECRET=your_session_secret_here
 
-# GitHub OAuth
-GITHUB_CLIENT_ID=your_github_id
-GITHUB_CLIENT_SECRET=your_github_secret
-GITHUB_REDIRECT_URI=http://localhost:3000/auth/github/callback
-# or use the legacy name supported by this project:
-# GITHUB_CALLBACK_URL=http://localhost:3000/auth/github/callback
+# Environment
+NODE_ENV=development
+PORT=5000
+
+# Third-Party Services
+RESEND_API_KEY=your_resend_api_key_here
+
+# OAuth Providers
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_REDIRECT_URI=http://localhost:5000/google/callback
+
+GITHUB_CLIENT_ID=your_github_client_id
+GITHUB_CLIENT_SECRET=your_github_client_secret
+GITHUB_REDIRECT_URI=http://localhost:5000/github/callback
 ```
 
 > Note: On Vercel, `.env` is not used in production. Add the same keys to the Vercel project Environment Variables panel.
